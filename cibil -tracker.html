@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIBIL Score Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 24px; margin-bottom: 20px; color: #333; }
+    .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+    .search-box input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .search-box button { padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .score-big { font-size: 64px; font-weight: bold; text-align: center; margin: 10px 0; }
+    .score-label { text-align: center; font-size: 18px; margin-bottom: 10px; }
+    .badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .badge-green { background: #e8f5e9; color: #2e7d32; }
+    .badge-orange { background: #fff3e0; color: #e65100; }
+    .badge-red { background: #ffebee; color: #c62828; }
+    .badge-wrap { text-align: center; margin-bottom: 16px; }
+    .gauge { width: 100%; height: 20px; background: linear-gradient(to right, #ef5350, #ff9800, #66bb6a, #26a69a); border-radius: 10px; position: relative; margin: 10px 0; }
+    .gauge-dot { width: 24px; height: 24px; background: #333; border-radius: 50%; position: absolute; top: -2px; transform: translateX(-50%); transition: left 0.5s; }
+    .top-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .metric { background: #f9f9f9; border-radius: 8px; padding: 12px; }
+    .metric-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .metric-value { font-size: 22px; font-weight: bold; color: #333; }
+    .loan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .loan-item { border: 1px solid #eee; border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+    .loan-name { font-size: 14px; color: #333; }
+    .loan-min { font-size: 11px; color: #888; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-green { background: #4CAF50; }
+    .dot-red { background: #f44336; }
+    .history-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .history-month { font-size: 12px; color: #888; min-width: 36px; }
+    .bar-wrap { flex: 1; background: #f0f0f0; border-radius: 4px; height: 10px; }
+    .bar { height: 10px; border-radius: 4px; }
+    .history-val { font-size: 12px; font-weight: bold; min-width: 36px; text-align: right; }
+    .section-title { font-size: 13px; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 12px; }
+    .error { color: red; padding: 10px; }
+    .loading { color: #888; padding: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CIBIL Score Tracker</h1>
+
+    <div class="search-box">
+      <input type="text" id="phoneInput" placeholder="Enter phone number" value="9999999999"/>
+      <button onclick="searchCibil()">Search</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const loans = [
+      { name: 'Home loan', min: 700 },
+      { name: 'Personal loan', min: 720 },
+      { name: 'Business loan', min: 680 },
+      { name: 'Car loan', min: 650 },
+      { name: 'Credit card', min: 750 },
+      { name: 'Gold loan', min: 0 },
+    ]
+
+    function getInfo(score) {
+      if (score >= 750) return { label: 'Excellent', color: '#2e7d32', badgeClass: 'badge-green', text: 'Eligible for all loans' }
+      if (score >= 700) return { label: 'Good', color: '#388e3c', badgeClass: 'badge-green', text: 'Eligible for most loans' }
+      if (score >= 650) return { label: 'Average', color: '#e65100', badgeClass: 'badge-orange', text: 'Limited loan options' }
+      if (score >= 600) return { label: 'Poor', color: '#bf360c', badgeClass: 'badge-orange', text: 'Very few options' }
+      return { label: 'Very Poor', color: '#c62828', badgeClass: 'badge-red', text: 'Loan approval unlikely' }
+    }
+
+    async function searchCibil() {
+      const phone = document.getElementById('phoneInput').value.trim()
+      const result = document.getElementById('result')
+      result.innerHTML = '<p class="loading">Loading...</p>'
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/cibil/${phone}`)
+        if (!res.ok) { result.innerHTML = '<p class="error">No record found for this phone number.</p>'; return }
+        const data = await res.json()
+        renderCibil(data)
+      } catch(e) {
+        result.innerHTML = '<p class="error">Could not connect to server. Make sure server is running.</p>'
+      }
+    }
+
+    function renderCibil(data) {
+      const score = data.score
+      const info = getInfo(score)
+      const pct = ((score - 300) / 600 * 100).toFixed(1)
+      const eligible = loans.filter(l => score >= l.min).length
+
+      const loanHTML = loans.map(l => `
+        <div class="loan-item">
+          <div><div class="loan-name">${l.name}</div><div class="loan-min">Min: ${l.min || 'none'}</div></div>
+          <div class="dot ${score >= l.min ? 'dot-green' : 'dot-red'}"></div>
+        </div>`).join('')
+
+      const histHTML = data.history.map(h => {
+        const p = ((h.score - 300) / 600 * 100).toFixed(1)
+        const color = h.score >= 750 ? '#4CAF50' : h.score >= 700 ? '#8BC34A' : h.score >= 650 ? '#FF9800' : '#f44336'
+        return `<div class="history-row">
+          <span class="history-month">${h.month}</span>
+          <div class="bar-wrap"><div class="bar" style="width:${p}%;background:${color}"></div></div>
+          <span class="history-val">${h.score}</span>
+        </div>`
+      }).join('')
+
+      document.getElementById('result').innerHTML = `
+        <div class="card">
+          <div class="top-grid">
+            <div class="metric"><div class="metric-label">Customer</div><div class="metric-value" style="font-size:16px">${data.customerName}</div></div>
+            <div class="metric"><div class="metric-label">Phone</div><div class="metric-value" style="font-size:16px">${data.phone}</div></div>
+            <div class="metric"><div class="metric-label">Loans eligible</div><div class="metric-value">${eligible}/6</div></div>
+          </div>
+          <div class="score-big" style="color:${info.color}">${score}</div>
+          <div class="score-label" style="color:${info.color}">${info.label} Credit</div>
+          <div class="badge-wrap"><span class="badge ${info.badgeClass}">${info.text}</span></div>
+          <div class="gauge"><div class="gauge-dot" style="left:${pct}%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:16px"><span>300</span><span>600</span><span>750</span><span>900</span></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Loan eligibility</div>
+          <div class="loan-grid">${loanHTML}</div>
+        </div>
+        <div class="card">
+          <div class="section-title">Score history</div>
+          ${histHTML}
+        </div>`
+    }
+
+    searchCibil()
+  </script>
+</body>
+</html>

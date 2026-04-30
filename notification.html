@@ -1,0 +1,368 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications & Alerts</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #6C3FC5;
+    --purple-dark: #4B2A8A;
+    --purple-light: #EDE8FA;
+    --purple-mid: #9B72E8;
+    --gray: #F4F2FB;
+    --text: #1A1035;
+    --text-muted: #7B6FA0;
+    --danger: #EF4444;
+    --border: #DDD6F3;
+    --green: #10B981;
+    --green-light: #D1FAE5;
+    --orange: #F59E0B;
+    --orange-light: #FEF3C7;
+    --red-light: #FEE2E2;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--gray); color: var(--text); min-height: 100vh; }
+  header {
+    background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple) 60%, var(--purple-mid) 100%);
+    padding: 0 40px; height: 70px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 24px rgba(108,63,197,0.25);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-family: 'Playfair Display', serif; color: white; font-size: 1.6rem; }
+  .back-btn {
+    padding: 8px 20px; background: rgba(255,255,255,0.15);
+    color: white; border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    text-decoration: none; display: flex; align-items: center; gap: 6px;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+  main { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+  /* SUMMARY CARDS */
+  .summary-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin-bottom: 28px;
+  }
+  .summary-card {
+    background: white; border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(108,63,197,0.07);
+    padding: 20px 22px;
+    animation: fadeUp 0.4s ease both;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .summary-card:nth-child(1) { animation-delay: 0s; }
+  .summary-card:nth-child(2) { animation-delay: 0.08s; }
+  .summary-card:nth-child(3) { animation-delay: 0.16s; }
+  .summary-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; flex-shrink: 0;
+  }
+  .icon-red { background: var(--red-light); }
+  .icon-orange { background: var(--orange-light); }
+  .icon-green { background: var(--green-light); }
+  .summary-info { flex: 1; }
+  .summary-value { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+  .summary-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* SECTION */
+  .section {
+    background: white; border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(108,63,197,0.07);
+    margin-bottom: 24px; overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+  .section:nth-child(1) { animation-delay: 0.24s; }
+  .section:nth-child(2) { animation-delay: 0.32s; }
+  .section:nth-child(3) { animation-delay: 0.40s; }
+  .section-head {
+    padding: 18px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--purple-light);
+  }
+  .section-head-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem; color: var(--purple-dark);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .count-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%;
+    font-size: 0.75rem; font-weight: 700; font-family: 'DM Sans', sans-serif;
+  }
+  .badge-red { background: var(--red-light); color: var(--danger); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+
+  /* ALERT ROW */
+  .alert-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; border-bottom: 1px solid var(--purple-light);
+    gap: 12px; transition: background 0.15s;
+  }
+  .alert-row:last-child { border-bottom: none; }
+  .alert-row:hover { background: var(--gray); }
+  .alert-left { display: flex; align-items: center; gap: 14px; flex: 1; }
+  .alert-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-red { background: var(--danger); }
+  .dot-orange { background: var(--orange); }
+  .dot-green { background: var(--green); }
+  .alert-name { font-weight: 600; font-size: 0.92rem; color: var(--text); }
+  .alert-detail { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+  .alert-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .alert-tag {
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .tag-red { background: var(--red-light); color: var(--danger); }
+  .tag-orange { background: var(--orange-light); color: var(--orange); }
+  .tag-pending { background: var(--purple-light); color: var(--purple-dark); }
+  .view-btn {
+    padding: 6px 14px; background: var(--purple-light);
+    color: var(--purple-dark); border: none; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+    font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .view-btn:hover { background: var(--purple); color: white; }
+
+  .empty-state {
+    padding: 40px; text-align: center; color: var(--text-muted);
+  }
+  .empty-state .emoji { font-size: 2.5rem; margin-bottom: 10px; }
+  .loading { text-align: center; padding: 40px; color: var(--text-muted); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 600px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    header { padding: 0 16px; }
+    main { padding: 20px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔔 Notifications & Alerts</h1>
+  <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
+</header>
+
+<main>
+
+  <!-- SUMMARY -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon icon-red">🔴</div>
+      <div class="summary-info">
+        <div class="summary-value" id="overdueCount" style="color:var(--danger)">—</div>
+        <div class="summary-label">Overdue Loans</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon icon-orange">⚠️</div>
+      <div class="summary-info">
+        <div class="summary-value" id="dueSoonCount" style="color:var(--orange)">—</div>
+        <div class="summary-label">Due in 7 Days</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon icon-orange">⏳</div>
+      <div class="summary-info">
+        <div class="summary-value" id="pendingCount" style="color:var(--purple)">—</div>
+        <div class="summary-label">Pending Review</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERDUE SECTION -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-head-title">
+        🔴 Overdue Loans
+        <span class="count-badge badge-red" id="overdueCountBadge">0</span>
+      </div>
+    </div>
+    <div id="overdueList"><div class="loading">⏳ Loading...</div></div>
+  </div>
+
+  <!-- DUE SOON SECTION -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-head-title">
+        ⚠️ Due in Next 7 Days
+        <span class="count-badge badge-orange" id="dueSoonCountBadge">0</span>
+      </div>
+    </div>
+    <div id="dueSoonList"><div class="loading">⏳ Loading...</div></div>
+  </div>
+
+  <!-- PENDING REVIEW SECTION -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-head-title">
+        ⏳ Pending Loans — Need Review
+        <span class="count-badge badge-orange" id="pendingCountBadge">0</span>
+      </div>
+    </div>
+    <div id="pendingList"><div class="loading">⏳ Loading...</div></div>
+  </div>
+
+</main>
+
+<script>
+  const API = 'http://localhost:5000/api/customers';
+  if (localStorage.getItem('isLoggedIn') !== 'true') window.location.href = 'login.html';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const in7Days = new Date(today);
+  in7Days.setDate(today.getDate() + 7);
+
+  async function loadNotifications() {
+    try {
+      const res = await fetch(API);
+      const customers = await res.json();
+
+      const overdue = [];
+      const dueSoon = [];
+      const pending = [];
+
+      customers.forEach(c => {
+        (c.loans || []).forEach(l => {
+          const item = { customer: c, loan: l };
+
+          // PENDING — needs review
+          if (l.status === 'pending') pending.push(item);
+
+          // DUE DATE checks
+          if (l.dueDate) {
+            const due = new Date(l.dueDate);
+            due.setHours(0, 0, 0, 0);
+            if (due < today) overdue.push(item);
+            else if (due <= in7Days) dueSoon.push(item);
+          }
+        });
+      });
+
+      // Update summary counts
+      document.getElementById('overdueCount').textContent = overdue.length;
+      document.getElementById('dueSoonCount').textContent = dueSoon.length;
+      document.getElementById('pendingCount').textContent = pending.length;
+      document.getElementById('overdueCountBadge').textContent = overdue.length;
+      document.getElementById('dueSoonCountBadge').textContent = dueSoon.length;
+      document.getElementById('pendingCountBadge').textContent = pending.length;
+
+      // Render lists
+      renderOverdue(overdue);
+      renderDueSoon(dueSoon);
+      renderPending(pending);
+
+    } catch(e) {
+      document.getElementById('overdueList').innerHTML = '<div class="loading">⚠️ Cannot connect to server!</div>';
+      document.getElementById('dueSoonList').innerHTML = '';
+      document.getElementById('pendingList').innerHTML = '';
+    }
+  }
+
+  function daysAgo(dateStr) {
+    const d = new Date(dateStr);
+    const diff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return 'Today';
+    if (diff === 1) return '1 day ago';
+    return diff + ' days ago';
+  }
+
+  function daysLeft(dateStr) {
+    const d = new Date(dateStr);
+    d.setHours(0,0,0,0);
+    const diff = Math.floor((d - today) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return 'Due Today!';
+    if (diff === 1) return '1 day left';
+    return diff + ' days left';
+  }
+
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function renderOverdue(items) {
+    if (items.length === 0) {
+      document.getElementById('overdueList').innerHTML = `
+        <div class="empty-state"><div class="emoji">✅</div><div>No overdue loans!</div></div>`;
+      return;
+    }
+    document.getElementById('overdueList').innerHTML = items.map(({ customer: c, loan: l }) => `
+      <div class="alert-row">
+        <div class="alert-left">
+          <div class="alert-dot dot-red"></div>
+          <div>
+            <div class="alert-name">${c.name}</div>
+            <div class="alert-detail">${l.loanType} • ₹${Number(l.loanAmount).toLocaleString('en-IN')} • Due: ${formatDate(l.dueDate)}</div>
+          </div>
+        </div>
+        <div class="alert-right">
+          <span class="alert-tag tag-red">🔴 Overdue</span>
+          <button class="view-btn" onclick="window.location.href='profile.html?id=${c._id}'">👤 View</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderDueSoon(items) {
+    if (items.length === 0) {
+      document.getElementById('dueSoonList').innerHTML = `
+        <div class="empty-state"><div class="emoji">✅</div><div>No loans due in next 7 days!</div></div>`;
+      return;
+    }
+    document.getElementById('dueSoonList').innerHTML = items.map(({ customer: c, loan: l }) => `
+      <div class="alert-row">
+        <div class="alert-left">
+          <div class="alert-dot dot-orange"></div>
+          <div>
+            <div class="alert-name">${c.name}</div>
+            <div class="alert-detail">${l.loanType} • ₹${Number(l.loanAmount).toLocaleString('en-IN')} • Due: ${formatDate(l.dueDate)}</div>
+          </div>
+        </div>
+        <div class="alert-right">
+          <span class="alert-tag tag-orange">⚠️ ${daysLeft(l.dueDate)}</span>
+          <button class="view-btn" onclick="window.location.href='profile.html?id=${c._id}'">👤 View</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderPending(items) {
+    if (items.length === 0) {
+      document.getElementById('pendingList').innerHTML = `
+        <div class="empty-state"><div class="emoji">✅</div><div>No pending loans!</div></div>`;
+      return;
+    }
+    document.getElementById('pendingList').innerHTML = items.map(({ customer: c, loan: l }) => `
+      <div class="alert-row">
+        <div class="alert-left">
+          <div class="alert-dot dot-orange"></div>
+          <div>
+            <div class="alert-name">${c.name}</div>
+            <div class="alert-detail">${l.loanType} • ₹${Number(l.loanAmount).toLocaleString('en-IN')} • Applied: ${daysAgo(l.appliedAt)}</div>
+          </div>
+        </div>
+        <div class="alert-right">
+          <span class="alert-tag tag-pending">⏳ Pending</span>
+          <button class="view-btn" onclick="window.location.href='profile.html?id=${c._id}'">👤 View</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  loadNotifications();
+</script>
+</body>
+</html>
